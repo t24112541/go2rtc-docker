@@ -1,0 +1,74 @@
+{
+    # Enable debug mode only during development
+    debug
+
+    # Define logging configuration
+#    log {
+#        output file /var/log/caddy/access.log {
+#            roll_size 10MB       # Roll over log files at 10MB
+#            roll_keep 5          # Keep 5 old log files
+#            roll_keep_for 720h   # Keep rolled logs for 30 days (720 hours)
+#        }
+#        format json
+#    }
+
+#    storage file_system {
+#        root /var/lib/caddy/
+#    }
+}
+
+:80 {
+    root * /www
+    file_server
+
+    # Set common CORS headers globally for all requests
+    header {
+        Access-Control-Allow-Origin "http://localhost:5173"
+        Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization, Content-Length"
+        Access-Control-Allow-Credentials true
+    }
+
+    @preflight {
+        method OPTIONS
+    }
+    respond @preflight 204
+
+    @websockets {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+
+    @allowedMethod {
+        method GET POST
+    }
+
+    @notAllowedMethod {
+        method DELETE PUT
+    }
+
+    handle /auth {
+        reverse_proxy rtsp_auth:9088
+    }
+
+    handle /api/ws* {
+        forward_auth rtsp_auth:9088 {
+            method POST
+            uri /api/authorize?token={query.token}
+        }
+        reverse_proxy host.docker.internal:1984
+    }
+
+    # Go2RTC service provider
+    handle /api/* {
+        forward_auth rtsp_auth:9088 {
+            method POST
+            uri /api/authorize?token={query.token}
+        }
+        reverse_proxy @allowedMethod host.docker.internal:1984 # Go2RTC
+    }
+
+#    handle /api* {
+#        respond @notAllowedMethod "not allowed" 405
+#    }
+}

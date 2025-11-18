@@ -1,0 +1,23 @@
+api:
+  origin: "*"
+webtorrent:
+  enabled: false
+streams:
+  # android: rtsp://admin:admin@192.168.1.41:1935
+#    usb_camera:
+#        - v4l2:device?video=/dev/video0&input_format=yuyv422&video_size=640x480&framerate=30
+# tuya: rtsp://192.168.0.100/cam1/mpeg4#media=video#backchannel=0
+# axis_camera: rtsp://root:pass@192.168.8.134/axis-media/media.amp
+# akuvox: onvif://admin:admin@192.168.8.213?subtype=Profile_Token
+# R29: rtsp://admin:admin@192.168.200.200:554/live/ch00_0#media=video#backchannel=0
+webrtc:
+  listen: "0.0.0.0:8555"
+  candidates:
+    - "host"
+  stun:
+    urls:
+      - "stun:stun.l.google.com:19302"
+  ignore_interfaces:
+    - br-
+log:
+  webrtc: trace

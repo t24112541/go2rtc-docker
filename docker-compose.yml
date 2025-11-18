@@ -1,0 +1,38 @@
+services:
+  caddy:
+    container_name: caddy
+    image: caddy:2.6.4-alpine
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./files:/www
+    ports:
+      - "80:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+
+  go2rtc:
+    image: alexxit/go2rtc
+    network_mode: host # important for WebRTC, HomeKit, UDP cameras
+    privileged: true # only for FFmpeg hardware transcoding
+    restart: unless-stopped # autorestart on fail or config change from WebUI
+    environment:
+      - TZ=asia/Bangkok # timezone in logs
+    volumes:
+      - "./go2rtc:/config" # folder for go2rtc.yaml file (edit from WebUI)
+    ports:
+      - 1984:1984
+      - 8555:8555
+      - 8554:8554
+
+  rtsp_auth:
+    container_name: rtsp_auth
+    build: ./rtsp-auth
+    restart: unless-stopped
+    volumes:
+      - "./rtsp-auth:/usr/local/etc/rtsp-auth:ro"
+    command:
+      - /usr/local/etc/rtsp-auth/rtsp_auth_linux
+      - --config
+      - /usr/local/etc/rtsp-auth/conf.json
